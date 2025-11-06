@@ -3,8 +3,8 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider = "sqlite"
+  url      = "file:./gas_delivery.db"
 }
 
 enum UserRole {
@@ -16,6 +16,7 @@ model User {
   id           Int      @id @default(autoincrement())
   name         String
   phone        String   @unique
+  cedula       String   @unique
   email        String?  @unique
   password     String
   role         UserRole @default(USER)

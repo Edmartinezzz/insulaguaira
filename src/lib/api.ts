@@ -13,7 +13,14 @@ const api = axios.create({
 
 // Añadir el token a las solicitudes
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
+  // Intentar obtener el token de administrador primero
+  let token = localStorage.getItem('token');
+  
+  // Si no hay token de administrador, intentar con el token de cliente
+  if (!token) {
+    token = localStorage.getItem('clienteToken');
+  }
+  
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -41,9 +48,19 @@ api.interceptors.response.use(
       
       if (error.response.status === 401) {
         // No autorizado - token inválido o expirado
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        window.location.href = '/login';
+        const isCliente = localStorage.getItem('clienteToken');
+        
+        if (isCliente) {
+          // Si es un cliente, redirigir al login de cliente
+          localStorage.removeItem('clienteToken');
+          localStorage.removeItem('clienteData');
+          window.location.href = '/cliente/login';
+        } else {
+          // Si es un administrador, redirigir al login de administrador
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          window.location.href = '/login';
+        }
       }
       
       throw new Error(error.response.data.error || 'Error en la solicitud');

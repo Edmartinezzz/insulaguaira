@@ -39,12 +39,35 @@ async function initDB() {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       nombre TEXT NOT NULL,
       direccion TEXT,
-      telefono TEXT,
+      telefono TEXT NOT NULL,
+      cedula TEXT UNIQUE NOT NULL,
       categoria TEXT NOT NULL DEFAULT 'Persona Natural',
       litros_mes REAL DEFAULT 0,
       litros_disponibles REAL DEFAULT 0,
-      activo BOOLEAN DEFAULT 1
+      activo BOOLEAN DEFAULT 1,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
+    
+    -- Crear índice para búsquedas por cédula
+    CREATE INDEX IF NOT EXISTS idx_clientes_cedula ON clientes(cedula);
+    
+    -- Crear índice para búsquedas por teléfono
+    CREATE INDEX IF NOT EXISTS idx_clientes_telefono ON clientes(telefono);
+
+    -- Tabla de inventario
+    CREATE TABLE IF NOT EXISTS inventario (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      litros_ingresados REAL NOT NULL,
+      litros_disponibles REAL NOT NULL,
+      fecha_ingreso TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      usuario_id INTEGER,
+      observaciones TEXT,
+      FOREIGN KEY (usuario_id) REFERENCES usuarios (id)
+    );
+
+    -- Índice para búsquedas por fecha
+    CREATE INDEX IF NOT EXISTS idx_inventario_fecha ON inventario(fecha_ingreso);
 
     CREATE TABLE IF NOT EXISTS retiros (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -117,6 +140,57 @@ app.post('/api/login', async (req, res) => {
   }
 });
 
+// Ruta para autenticación por cédula
+app.post('/api/clientes/login', async (req, res) => {
+  try {
+    const { cedula } = req.body;
+
+    // Validar que se proporcione la cédula
+    if (!cedula) {
+      return res.status(400).json({ error: 'La cédula es requerida' });
+    }
+
+    // Buscar al cliente por cédula
+    const cliente = await db.get(
+      'SELECT * FROM clientes WHERE cedula = ? AND activo = 1',
+      [cedula]
+    );
+
+    if (!cliente) {
+      return res.status(404).json({ error: 'Cliente no encontrado o inactivo' });
+    }
+
+    // Generar token JWT
+    const token = jwt.sign(
+      { 
+        id: cliente.id, 
+        nombre: cliente.nombre,
+        cedula: cliente.cedula,
+        tipo: 'cliente' 
+      },
+      process.env.JWT_SECRET || 'tu_clave_secreta',
+      { expiresIn: '8h' }
+    );
+
+    // Devolver información del cliente (sin datos sensibles)
+    res.json({
+      token,
+      cliente: {
+        id: cliente.id,
+        nombre: cliente.nombre,
+        cedula: cliente.cedula,
+        telefono: cliente.telefono,
+        categoria: cliente.categoria,
+        litros_disponibles: cliente.litros_disponibles,
+        litros_mes: cliente.litros_mes
+      }
+    });
+  } catch (error) {
+    console.error('Error en autenticación de cliente:', error);
+    res.status(500).json({ error: 'Error en el servidor' });
+  }
+});
+
 // Ruta protegida de ejemplo
 app.get('/api/dashboard', authenticateToken, (req, res) => {
   res.json({ message: 'Bienvenido al dashboard' });
@@ -125,10 +199,10 @@ app.get('/api/dashboard', authenticateToken, (req, res) => {
 // Registrar nuevo cliente (requiere autenticación)
 app.post('/api/clientes', async (req, res) => {
   try {
-    const { nombre, telefono, litros_mes, categoria = 'Persona Natural' } = req.body;
+    const { nombre, telefono, cedula, litros_mes, categoria = 'Persona Natural' } = req.body;
 
     // Validaciones
-    if (!nombre || !telefono || litros_mes === undefined) {
+    if (!nombre || !telefono || !cedula || litros_mes === undefined) {
       return res.status(400).json({ error: 'Todos los campos son requeridos' });
     }
     
@@ -140,21 +214,27 @@ app.post('/api/clientes', async (req, res) => {
       return res.status(400).json({ error: 'La cantidad de litros debe ser mayor a cero' });
     }
 
-    // Verificar si el teléfono ya está registrado
+    // Validar formato de cédula venezolana (7 u 8 dígitos)
+    const cedulaRegex = /^[0-9]{7,8}$/;
+    if (!cedulaRegex.test(cedula)) {
+      return res.status(400).json({ error: 'La cédula debe tener 7 u 8 dígitos numéricos' });
+    }
+
+    // Verificar si el teléfono o la cédula ya están registrados
     const existingClient = await db.get(
-      'SELECT id FROM clientes WHERE telefono = ?',
-      [telefono]
+      'SELECT id FROM clientes WHERE telefono = ? OR cedula = ?',
+      [telefono, cedula]
     );
 
     if (existingClient) {
-      return res.status(400).json({ error: 'El número telefónico ya está registrado' });
+      return res.status(400).json({ error: 'El número telefónico o cédula ya están registrados' });
     }
 
     // Crear el cliente en la base de datos
     const result = await db.run(
-      `INSERT INTO clientes (nombre, telefono, categoria, litros_mes, litros_disponibles, activo)
-       VALUES (?, ?, ?, ?, ?, 1)`,
-      [nombre, telefono, categoria, litros_mes, litros_mes]
+      `INSERT INTO clientes (nombre, telefono, cedula, categoria, litros_mes, litros_disponibles, activo)
+       VALUES (?, ?, ?, ?, ?, ?, 1)`,
+      [nombre, telefono, cedula, categoria, litros_mes, litros_mes]
     );
 
     // Crear usuario para el cliente (el teléfono será el usuario y contraseña)
@@ -176,9 +256,15 @@ app.post('/api/clientes', async (req, res) => {
 });
 
 // Registrar retiro de combustible
-app.post('/api/retiros', async (req, res) => {
+app.post('/api/retiros', authenticateToken, async (req, res) => {
   try {
     const { cliente_id, litros } = req.body;
+    
+    // Verificar que hay suficiente inventario
+    const inventario = await db.get('SELECT litros_disponibles FROM inventario ORDER BY id DESC LIMIT 1');
+    if (!inventario || inventario.litros_disponibles < litros) {
+      return res.status(400).json({ error: 'No hay suficiente combustible disponible en inventario' });
+    }
 
     if (!cliente_id || !litros) {
       return res.status(400).json({ error: 'Cliente ID y litros son requeridos' });
@@ -207,13 +293,19 @@ app.post('/api/retiros', async (req, res) => {
     // Registrar el retiro
     const result = await db.run(
       'INSERT INTO retiros (cliente_id, usuario_id, litros) VALUES (?, ?, ?)',
-      [cliente_id, 1, litros] // usuario_id = 1 (admin por defecto)
+      [cliente_id, req.user.id, litros]
     );
 
     // Actualizar litros disponibles del cliente
     await db.run(
       'UPDATE clientes SET litros_disponibles = litros_disponibles - ? WHERE id = ?',
       [litros, cliente_id]
+    );
+
+    // Actualizar el inventario
+    await db.run(
+      'UPDATE inventario SET litros_disponibles = litros_disponibles - ? WHERE id = (SELECT id FROM inventario ORDER BY id DESC LIMIT 1)',
+      [litros]
     );
 
     res.status(201).json({
@@ -262,6 +354,39 @@ app.get('/api/retiros', async (req, res) => {
   } catch (error) {
     console.error('Error al obtener retiros:', error);
     res.status(500).json({ error: 'Error al obtener los retiros' });
+  }
+});
+
+// Obtener estadísticas generales para el dashboard
+app.get('/api/estadisticas', async (req, res) => {
+  try {
+    // Obtener total de clientes activos
+    const clientesActivos = await db.get(
+      'SELECT COUNT(*) as total FROM clientes WHERE activo = 1'
+    );
+
+    // Obtener total de litros entregados (todos los retiros)
+    const litrosEntregados = await db.get(
+      'SELECT COALESCE(SUM(litros), 0) as total FROM retiros'
+    );
+
+    // Obtener el inventario actual
+    const inventario = await db.get(
+      'SELECT litros_disponibles FROM inventario ORDER BY id DESC LIMIT 1'
+    );
+
+    // Obtener el próximo vencimiento (podrías implementar esta lógica según tus necesidades)
+    const proximoVencimiento = 0; // Por ahora lo dejamos en 0
+
+    res.json({
+      totalClientes: clientesActivos?.total || 0,
+      totalLitrosEntregados: litrosEntregados?.total || 0,
+      inventarioActual: inventario?.litros_disponibles || 0,
+      proximoVencimiento: proximoVencimiento
+    });
+  } catch (error) {
+    console.error('Error al obtener estadísticas generales:', error);
+    res.status(500).json({ error: 'Error al obtener estadísticas generales' });
   }
 });
 
@@ -320,12 +445,12 @@ app.get('/api/estadisticas/retiros', async (req, res) => {
     `);
 
     res.json({
-      litrosHoy: hoy.total,
-      litrosMes: esteMes.total,
-      litrosAno: esteAno.total,
-      clientesHoy: clientesHoy.total,
-      litrosPorMes,
-      retirosPorDia
+      litrosHoy: hoy?.total || 0,
+      litrosMes: esteMes?.total || 0,
+      litrosAno: esteAno?.total || 0,
+      clientesHoy: clientesHoy?.total || 0,
+      litrosPorMes: litrosPorMes || [],
+      retirosPorDia: retirosPorDia || []
     });
   } catch (error) {
     console.error('Error al obtener estadísticas de retiros:', error);
@@ -358,6 +483,64 @@ app.get('/api/clientes/telefono/:telefono', async (req, res) => {
   } catch (error) {
     console.error('Error al buscar cliente:', error);
     res.status(500).json({ error: 'Error al buscar el cliente' });
+  }
+});
+
+// Rutas de inventario
+app.get('/api/inventario', async (req, res) => {
+  try {
+    const inventario = await db.get('SELECT * FROM inventario ORDER BY id DESC LIMIT 1');
+    res.json(inventario || { litros_disponibles: 0 });
+  } catch (error) {
+    console.error('Error al obtener inventario:', error);
+    res.status(500).json({ error: 'Error al obtener el inventario' });
+  }
+});
+
+app.get('/api/inventario/historial', async (req, res) => {
+  try {
+    const historial = await db.all(`
+      SELECT i.*, u.usuario as usuario_nombre 
+      FROM inventario i 
+      LEFT JOIN usuarios u ON i.usuario_id = u.id 
+      ORDER BY i.fecha_ingreso DESC
+    `);
+    res.json(historial);
+  } catch (error) {
+    console.error('Error al obtener historial de inventario:', error);
+    res.status(500).json({ error: 'Error al obtener el historial de inventario' });
+  }
+});
+
+app.post('/api/inventario', authenticateToken, async (req, res) => {
+  try {
+    const { litros_ingresados, observaciones } = req.body;
+    const usuario_id = req.user.id;
+
+    if (!litros_ingresados || isNaN(litros_ingresados) || litros_ingresados <= 0) {
+      return res.status(400).json({ error: 'Ingrese una cantidad válida de litros' });
+    }
+
+    // Obtener el inventario actual
+    const inventarioActual = await db.get('SELECT * FROM inventario ORDER BY id DESC LIMIT 1');
+    const litros_disponibles = (inventarioActual?.litros_disponibles || 0) + parseFloat(litros_ingresados);
+
+    // Insertar nuevo registro de inventario
+    const result = await db.run(
+      'INSERT INTO inventario (litros_ingresados, litros_disponibles, usuario_id, observaciones) VALUES (?, ?, ?, ?)',
+      [parseFloat(litros_ingresados), litros_disponibles, usuario_id, observaciones || null]
+    );
+
+    res.status(201).json({
+      id: result.lastID,
+      litros_ingresados: parseFloat(litros_ingresados),
+      litros_disponibles,
+      usuario_id,
+      observaciones: observaciones || null
+    });
+  } catch (error) {
+    console.error('Error al actualizar inventario:', error);
+    res.status(500).json({ error: 'Error al actualizar el inventario' });
   }
 });
 

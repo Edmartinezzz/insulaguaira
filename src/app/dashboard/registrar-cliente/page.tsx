@@ -12,6 +12,7 @@ export default function RegistrarCliente() {
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     nombre: '',
+    cedula: '',
     telefono: '',
     litros_mes: '',
     categoria: 'Persona Natural',
@@ -28,8 +29,15 @@ export default function RegistrarCliente() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.nombre || !formData.telefono || !formData.litros_mes || !formData.categoria) {
+    if (!formData.nombre || !formData.cedula || !formData.telefono || !formData.litros_mes || !formData.categoria) {
       toast.error('Todos los campos son obligatorios');
+      return;
+    }
+
+    // Validar formato de cédula venezolana (7 u 8 dígitos)
+    const cedulaRegex = /^[0-9]{7,8}$/;
+    if (!cedulaRegex.test(formData.cedula)) {
+      toast.error('La cédula debe tener 7 u 8 dígitos numéricos');
       return;
     }
 
@@ -43,6 +51,7 @@ export default function RegistrarCliente() {
     try {
       await api.post('/clientes', {
         nombre: formData.nombre,
+        cedula: formData.cedula,
         telefono: formData.telefono,
         litros_mes: Number(formData.litros_mes),
         categoria: formData.categoria,
@@ -53,6 +62,7 @@ export default function RegistrarCliente() {
       // Limpiar formulario
       setFormData({
         nombre: '',
+        cedula: '',
         telefono: '',
         litros_mes: '',
         categoria: 'Persona Natural',
@@ -106,8 +116,32 @@ export default function RegistrarCliente() {
                     name="nombre"
                     value={formData.nombre}
                     onChange={handleChange}
-                    className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                    placeholder="Ej: Juan Pérez García"
+                    className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Ej: Juan Pérez"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label htmlFor="cedula" className="block text-sm font-medium text-gray-700 mb-2">
+                  Cédula de Identidad *
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <FiUser className="h-5 w-5 text-gray-400" />
+                  </div>
+                  <input
+                    type="text"
+                    id="cedula"
+                    name="cedula"
+                    value={formData.cedula}
+                    onChange={handleChange}
+                    className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Ej: 12345678"
+                    maxLength={8}
+                    pattern="\d{7,8}"
+                    title="Ingrese un número de cédula venezolano (7 u 8 dígitos)"
                     required
                   />
                 </div>

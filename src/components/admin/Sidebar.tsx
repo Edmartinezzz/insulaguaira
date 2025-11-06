@@ -1,12 +1,15 @@
+'use client';
+
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Truck, Users, Settings, LogOut } from 'lucide-react';
+import { Home, Truck, Users, Settings, LogOut, Package } from 'lucide-react';
 
 export function Sidebar() {
   const pathname = usePathname();
   
   const navItems = [
     { name: 'Dashboard', href: '/admin/dashboard', icon: Home },
+    { name: 'Inventario', href: '/admin/inventario', icon: Package },
     { name: 'Vehículos', href: '/admin/vehicles', icon: Truck },
     { name: 'Conductores', href: '/admin/drivers', icon: Users },
     { name: 'Configuración', href: '/admin/settings', icon: Settings },

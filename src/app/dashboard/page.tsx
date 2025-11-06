@@ -165,6 +165,13 @@ export default function Dashboard() {
             </div>
             <div className="flex gap-3">
               <button
+                onClick={() => router.push('/admin/inventario')}
+                className="flex items-center px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors"
+              >
+                <FiPackage className="mr-2" />
+                Inventario
+              </button>
+              <button
                 onClick={() => router.push('/dashboard/registrar-cliente')}
                 className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
               >
@@ -198,103 +205,26 @@ export default function Dashboard() {
         </header>
 
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          {/* Tarjetas de resumen */}
-          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 mb-8">
-            <div className="bg-white overflow-hidden shadow rounded-lg">
-              <div className="p-5">
-                <div className="flex items-center">
-                  <div className="flex-shrink-0 bg-blue-500 rounded-md p-3">
-                    <FiUser className="h-6 w-6 text-white" />
-                  </div>
-                  <div className="ml-5 w-0 flex-1">
-                    <dl>
-                      <dt className="text-sm font-medium text-gray-500 truncate">Clientes Activos</dt>
-                      <dd>
-                        <div className="text-lg font-medium text-gray-900">{estadisticas.totalClientes || 0}</div>
-                      </dd>
-                    </dl>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white overflow-hidden shadow rounded-lg">
-              <div className="p-5">
-                <div className="flex items-center">
-                  <div className="flex-shrink-0 bg-green-500 rounded-md p-3">
-                    <FiPackage className="h-6 w-6 text-white" />
-                  </div>
-                  <div className="ml-5 w-0 flex-1">
-                    <dl>
-                      <dt className="text-sm font-medium text-gray-500 truncate">Litros Entregados</dt>
-                      <dd>
-                        <div className="text-lg font-medium text-gray-900">
-                          {(estadisticas.totalLitrosEntregados || 0).toLocaleString()} L
-                        </div>
-                      </dd>
-                    </dl>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white overflow-hidden shadow rounded-lg">
-              <div className="p-5">
-                <div className="flex items-center">
-                  <div className="flex-shrink-0 bg-yellow-500 rounded-md p-3">
-                    <FiDollarSign className="h-6 w-6 text-white" />
-                  </div>
-                  <div className="ml-5 w-0 flex-1">
-                    <dl>
-                      <dt className="text-sm font-medium text-gray-500 truncate">Próximos Vencimientos</dt>
-                      <dd>
-                        <div className="text-lg font-medium text-gray-900">
-                          {estadisticas.proximosVencimientos || 0}
-                        </div>
-                      </dd>
-                    </dl>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white overflow-hidden shadow rounded-lg">
-              <div className="p-5">
-                <div className="flex items-center">
-                  <div className="flex-shrink-0 bg-red-500 rounded-md p-3">
-                    <FiTruck className="h-6 w-6 text-white" />
-                  </div>
-                  <div className="ml-5 w-0 flex-1">
-                    <dl>
-                      <dt className="text-sm font-medium text-gray-500 truncate">Total Retiros</dt>
-                      <dd>
-                        <div className="text-lg font-medium text-gray-900">{(estadisticas.totalLitrosEntregados || 0).toLocaleString()} L</div>
-                      </dd>
-                    </dl>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+          {/* Se eliminaron las tarjetas de resumen */}
 
           {/* Tarjetas adicionales de estadísticas */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg p-6 text-white">
-              <h3 className="text-sm font-semibold mb-2">Litros Retirados Hoy</h3>
-              <p className="text-4xl font-bold">{statsRetiros.litrosHoy.toFixed(2)} L</p>
-              <p className="text-sm text-blue-100 mt-2">{statsRetiros.clientesHoy} clientes retiraron hoy</p>
+            <div className="bg-gradient-to-br from-blue-100 to-blue-50 border border-blue-200 rounded-xl shadow p-6">
+              <h3 className="text-sm font-semibold mb-2 text-blue-800">Litros Retirados Hoy</h3>
+              <p className="text-4xl font-bold text-blue-600">{statsRetiros.litrosHoy.toFixed(2)} <span className="text-2xl">L</span></p>
+              <p className="text-sm text-blue-500 mt-2">{statsRetiros.clientesHoy} clientes retiraron hoy</p>
             </div>
 
-            <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-xl shadow-lg p-6 text-white">
-              <h3 className="text-sm font-semibold mb-2">Litros Este Mes</h3>
-              <p className="text-4xl font-bold">{statsRetiros.litrosMes.toFixed(2)} L</p>
-              <p className="text-sm text-green-100 mt-2">Acumulado mensual</p>
+            <div className="bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-xl shadow p-6">
+              <h3 className="text-sm font-semibold mb-2 text-green-800">Litros Este Mes</h3>
+              <p className="text-4xl font-bold text-green-600">{statsRetiros.litrosMes.toFixed(2)} <span className="text-2xl">L</span></p>
+              <p className="text-sm text-green-500 mt-2">Acumulado mensual</p>
             </div>
 
-            <div className="bg-gradient-to-br from-yellow-500 to-orange-500 rounded-xl shadow-lg p-6 text-white">
-              <h3 className="text-sm font-semibold mb-2">Litros Este Año</h3>
-              <p className="text-4xl font-bold">{statsRetiros.litrosAno.toFixed(2)} L</p>
-              <p className="text-sm text-yellow-100 mt-2">Acumulado anual</p>
+            <div className="bg-gradient-to-br from-amber-50 to-amber-100 border border-amber-200 rounded-xl shadow p-6">
+              <h3 className="text-sm font-semibold mb-2 text-amber-800">Litros Este Año</h3>
+              <p className="text-4xl font-bold text-amber-600">{statsRetiros.litrosAno.toFixed(2)} <span className="text-2xl">L</span></p>
+              <p className="text-sm text-amber-500 mt-2">Acumulado anual</p>
             </div>
           </div>
 

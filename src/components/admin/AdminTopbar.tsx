@@ -1,3 +1,5 @@
+'use client';
+
 import { Bell, Search, UserCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
