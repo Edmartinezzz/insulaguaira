@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '../../../lib/prisma';
+import { prisma } from '../../../../lib/prisma';
 
 // Para demo no hay auth: devuelve todas las entregas en curso
 export async function GET() {

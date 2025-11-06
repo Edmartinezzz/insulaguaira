@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '../../../lib/prisma';
-import { WhatsAppClient } from '../../../lib/whatsapp';
+import { prisma } from '../../../../lib/prisma';
+import { WhatsAppClient } from '../../../../lib/whatsapp';
 
 export async function POST(req: NextRequest) {
   const { orderId, driverId } = await req.json();

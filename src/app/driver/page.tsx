@@ -1,6 +1,9 @@
 "use client";
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
+import { Card } from '../../components/ui/Card';
+import { Badge } from '../../components/ui/Badge';
+import { Button } from '../../components/ui/Button';
 
 type Delivery = {
   id: string;
@@ -41,19 +44,19 @@ export default function DriverApp() {
       <h1 className="text-xl font-semibold">Mis entregas</h1>
       <div className="grid gap-4 md:grid-cols-2">
         {deliveries.map(d => (
-          <div key={d.id} className="rounded-md border bg-white p-4">
+          <Card key={d.id}>
             <div className="font-medium">{d.order.customerName} • {d.order.phone}</div>
             <div className="text-sm text-gray-700">{d.order.address}</div>
             <div className="text-sm text-gray-700">{d.order.qty} × {d.order.gasType}</div>
             <div className="mt-3 flex items-center gap-2">
-              <span className="text-xs rounded bg-gray-100 px-2 py-1">{d.status}</span>
+              <Badge>{d.status}</Badge>
               <div className="ml-auto flex gap-2">
-                <button className="rounded bg-blue-600 px-3 py-1 text-white" onClick={() => updateStatus(d.id, 'EN_CAMINO')}>En camino</button>
-                <button className="rounded bg-green-600 px-3 py-1 text-white" onClick={() => updateStatus(d.id, 'ENTREGADO')}>Entregado</button>
-                <button className="rounded bg-red-600 px-3 py-1 text-white" onClick={() => updateStatus(d.id, 'FALLIDO')}>Fallido</button>
+                <Button variant="secondary" onClick={() => updateStatus(d.id, 'EN_CAMINO')}>En camino</Button>
+                <Button variant="primary" onClick={() => updateStatus(d.id, 'ENTREGADO')}>Entregado</Button>
+                <Button variant="danger" onClick={() => updateStatus(d.id, 'FALLIDO')}>Fallido</Button>
               </div>
             </div>
-          </div>
+          </Card>
         ))}
       </div>
     </div>
