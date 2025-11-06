@@ -1,13 +1,14 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  // Enable server actions
+  
+  // Desactivar Turbopack temporalmente para evitar conflictos
   experimental: {
-    serverActions: {
-      bodySizeLimit: '2mb',
-    },
+    serverActions: true,
+    serverComponentsExternalPackages: ['prisma', '@prisma/client'],
   },
-  // Webpack configuration
+  
+  // Configuración de webpack
   webpack: (config) => {
     config.resolve.alias = {
       ...config.resolve.alias,
@@ -15,31 +16,28 @@ const nextConfig = {
     };
     return config;
   },
-  // Image configuration
+  
+  // Configuración de imágenes
   images: {
     remotePatterns: [
       {
         protocol: 'http',
-        hostname: 'localhost',
-        port: '5000',
-        pathname: '/**',
+        hostname: '**', // Acepta cualquier hostname
+      },
+      {
+        protocol: 'https',
+        hostname: '**', // Acepta cualquier hostname seguro
       },
     ],
   },
-  // Explicitly specify build output
+  
+  // Configuración de salida
   output: 'standalone',
-  // Turbopack configuration
-  turbopack: {
-    // Enable Webpack compatibility
-    webpack: {
-      resolve: {
-        alias: {
-          '@': require('path').resolve(__dirname, 'src'),
-        },
-      },
-    },
-  },
-  // Extended logging (development only)
+  
+  // Configuración de transpilación
+  transpilePackages: ['@prisma/client', 'prisma'],
+  
+  // Configuración de logging extendido (solo desarrollo)
   ...(process.env.NODE_ENV === 'development' && {
     logging: {
       fetches: {

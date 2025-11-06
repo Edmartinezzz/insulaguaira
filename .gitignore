@@ -8,6 +8,7 @@ out
 # env
 .env
 .env.*.local
+!.env.example
 .env.local
 
 # logs
@@ -22,5 +23,3 @@ pnpm-debug.log*
 # mac/win
 .DS_Store
 Thumbs.db
-
-
