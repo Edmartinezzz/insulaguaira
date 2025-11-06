@@ -2,7 +2,7 @@
 const nextConfig = {
   reactStrictMode: true,
   
-  // Configuración experimental
+  // Configuración de Turbopack
   experimental: {
     // Habilitar Server Actions
     serverActions: {
@@ -10,13 +10,24 @@ const nextConfig = {
     },
   },
   
-  // Configuración de webpack
-  webpack: (config) => {
-    config.resolve.alias = {
-      ...config.resolve.alias,
-      '@': require('path').resolve(__dirname, 'src'),
-    };
+  // Configuración de Webpack
+  webpack: (config, { isServer }) => {
+    // Solo aplicar alias en modo Webpack
+    if (!process.env.TURBOPACK) {
+      config.resolve.alias = {
+        ...config.resolve.alias,
+        '@': require('path').resolve(__dirname, 'src'),
+      };
+    }
     return config;
+  },
+  
+  // Configuración de Turbopack
+  turbopack: {
+    // Configuración específica de Turbopack
+    resolveAlias: {
+      '@': require('path').resolve(__dirname, 'src'),
+    },
   },
   
   // Configuración de imágenes
