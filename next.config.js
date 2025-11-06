@@ -2,10 +2,12 @@
 const nextConfig = {
   reactStrictMode: true,
   
-  // Desactivar Turbopack temporalmente para evitar conflictos
+  // Configuración experimental
   experimental: {
-    serverActions: true,
-    serverComponentsExternalPackages: ['prisma', '@prisma/client'],
+    // Habilitar Server Actions
+    serverActions: {
+      bodySizeLimit: '2mb',
+    },
   },
   
   // Configuración de webpack
@@ -21,12 +23,12 @@ const nextConfig = {
   images: {
     remotePatterns: [
       {
-        protocol: 'http',
-        hostname: '**', // Acepta cualquier hostname
+        protocol: 'https',
+        hostname: '**',
       },
       {
-        protocol: 'https',
-        hostname: '**', // Acepta cualquier hostname seguro
+        protocol: 'http',
+        hostname: '**',
       },
     ],
   },
@@ -35,7 +37,10 @@ const nextConfig = {
   output: 'standalone',
   
   // Configuración de transpilación
-  transpilePackages: ['@prisma/client', 'prisma'],
+  transpilePackages: ['@prisma/client'],
+  
+  // Configuración de paquetes externos para el servidor
+  serverExternalPackages: ['@prisma/client', 'prisma'],
   
   // Configuración de logging extendido (solo desarrollo)
   ...(process.env.NODE_ENV === 'development' && {
