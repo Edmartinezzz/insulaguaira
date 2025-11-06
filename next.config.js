@@ -1,8 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  // Configuración vacía para Turbopack (Next 16 requiere esto si hay config de webpack)
-  turbopack: {},
   // Configuración de webpack
   webpack: (config) => {
     config.resolve.alias = {
@@ -13,7 +11,6 @@ const nextConfig = {
   },
   // Configuración de imágenes
   images: {
-    domains: ['localhost'],
     remotePatterns: [
       {
         protocol: 'http',
@@ -22,6 +19,11 @@ const nextConfig = {
         pathname: '/**',
       },
     ],
+  },
+  // Configuración para API routes
+  experimental: {
+    serverActions: true,
+    serverComponentsExternalPackages: ['prisma', '@prisma/client'],
   },
   // Configuración de logging extendida (solo en desarrollo)
   ...(process.env.NODE_ENV === 'development' && {
