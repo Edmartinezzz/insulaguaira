@@ -47,10 +47,8 @@ const nextConfig = {
   // Configuración de salida
   output: 'standalone',
   
-  // Configuración de transpilación
-  transpilePackages: ['@prisma/client'],
-  
-  // Configuración de paquetes externos para el servidor
+  // Configuración de paquetes para el servidor
+  // Usamos solo serverExternalPackages para evitar conflictos
   serverExternalPackages: ['@prisma/client', 'prisma'],
   
   // Configuración de logging extendido (solo desarrollo)
