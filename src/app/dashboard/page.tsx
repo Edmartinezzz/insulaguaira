@@ -18,7 +18,7 @@ import {
   LineElement,
 } from 'chart.js';
 import { Bar, Line, Pie } from 'react-chartjs-2';
-import { FiTruck, FiPackage, FiUser, FiDollarSign, FiClock, FiCalendar, FiSearch, FiUserPlus, FiLogOut } from 'react-icons/fi';
+import { FiTruck, FiPackage, FiUser, FiUsers, FiDollarSign, FiClock, FiCalendar, FiSearch, FiUserPlus, FiLogOut, FiMenu, FiX, FiDownload, FiFilter, FiRefreshCw, FiLock, FiUnlock, FiFileText, FiEye } from 'react-icons/fi';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import api from '@/lib/api';
 import axios from 'axios';
@@ -56,7 +56,7 @@ export default function Dashboard() {
   const { data: estadisticas, isLoading } = useQuery({
     queryKey: ['estadisticas'],
     queryFn: async () => {
-      const { data } = await axios.get('/api/estadisticas');
+      const { data } = await api.get('/api/estadisticas');
       return data;
     },
     initialData: {
@@ -65,23 +65,36 @@ export default function Dashboard() {
       proximosVencimientos: 0,
     },
     refetchInterval: 5000, // Actualizar cada 5 segundos
+    enabled: !!user, // Solo ejecutar si el usuario está autenticado
   });
 
   // Obtener últimos retiros en tiempo real
   const { data: ultimosRetiros = [], isLoading: loadingRetiros } = useQuery({
     queryKey: ['retiros'],
     queryFn: async () => {
-      const { data } = await api.get('/retiros');
+      const { data } = await api.get('/api/retiros');
       return data;
     },
     refetchInterval: 3000, // Actualizar cada 3 segundos
+    enabled: !!user, // Solo ejecutar si el usuario está autenticado
+  });
+
+  // Obtener lista de usuarios registrados
+  const { data: usuarios = [], isLoading: loadingUsuarios } = useQuery({
+    queryKey: ['usuarios-dashboard'],
+    queryFn: async () => {
+      const { data } = await api.get('/api/clientes/simple');
+      return data;
+    },
+    refetchInterval: 30000, // Actualizar cada 30 segundos
+    enabled: !!user, // Solo ejecutar si el usuario está autenticado
   });
 
   // Obtener estadísticas de retiros para las gráficas
   const { data: statsRetiros } = useQuery({
     queryKey: ['estadisticasRetiros'],
     queryFn: async () => {
-      const { data } = await api.get('/estadisticas/retiros');
+      const { data } = await api.get('/api/estadisticas/retiros');
       return data;
     },
     initialData: {
@@ -93,6 +106,19 @@ export default function Dashboard() {
       retirosPorDia: []
     },
     refetchInterval: 5000, // Actualizar cada 5 segundos
+    enabled: !!user, // Solo ejecutar si el usuario está autenticado
+  });
+
+  // Obtener estado de bloqueo de retiros
+  const { data: estadoBloqueo, refetch: refetchBloqueo } = useQuery({
+    queryKey: ['estadoBloqueo'],
+    queryFn: async () => {
+      const { data } = await api.get('/api/sistema/bloqueo');
+      return data;
+    },
+    initialData: { bloqueado: false },
+    refetchInterval: 10000, // Actualizar cada 10 segundos
+    enabled: !!user, // Solo ejecutar si el usuario está autenticado
   });
 
   // Preparar datos para gráfica de retiros por día (últimos 7 días)
@@ -162,8 +188,21 @@ export default function Dashboard() {
             <div>
               <h1 className="text-2xl md:text-3xl font-bold text-gray-800">Panel de Control</h1>
               <p className="text-gray-600">Bienvenido, {user?.nombre || 'Usuario'}</p>
+              {estadoBloqueo?.bloqueado && (
+                <div className="mt-2 flex items-center px-3 py-1 bg-red-100 border border-red-300 rounded-lg">
+                  <FiLock className="mr-2 h-4 w-4 text-red-600" />
+                  <span className="text-sm font-medium text-red-800">Retiros de combustible BLOQUEADOS</span>
+                </div>
+              )}
             </div>
             <div className="flex gap-3">
+              <button
+                onClick={() => router.push('/admin/agendamientos-diarios')}
+                className="flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+              >
+                <FiCalendar className="mr-2" />
+                Lista Diaria
+              </button>
               <button
                 onClick={() => router.push('/admin/inventario')}
                 className="flex items-center px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors"
@@ -184,6 +223,60 @@ export default function Dashboard() {
               >
                 <FiSearch className="mr-2" />
                 Consultar Cliente
+              </button>
+              <button
+                onClick={async () => {
+                  if (confirm('¿Resetear litros disponibles de todos los clientes? Esto restaurará sus litros mensuales.')) {
+                    try {
+                      const response = await api.post('/api/admin/reset-litros');
+                      alert(`✅ ${response.data.message}\nClientes actualizados: ${response.data.clientes_actualizados}`);
+                    } catch (error: any) {
+                      alert('❌ Error al resetear litros: ' + (error.response?.data?.error || error.message));
+                    }
+                  }
+                }}
+                className="flex items-center px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
+              >
+                <FiRefreshCw className="mr-2" />
+                Reset Litros
+              </button>
+              <button
+                onClick={async () => {
+                  const accion = estadoBloqueo?.bloqueado ? 'desbloquear' : 'bloquear';
+                  const mensaje = estadoBloqueo?.bloqueado 
+                    ? '¿Desbloquear retiros de combustible? Los clientes podrán volver a retirar combustible.' 
+                    : '¿Bloquear retiros de combustible? Ningún cliente podrá retirar combustible hasta que se desbloquee.';
+                  
+                  if (confirm(mensaje)) {
+                    try {
+                      const response = await api.post('/api/sistema/bloqueo', {
+                        bloqueado: !estadoBloqueo?.bloqueado
+                      });
+                      alert(`✅ ${response.data.message}`);
+                      refetchBloqueo(); // Actualizar estado
+                    } catch (error: any) {
+                      alert('❌ Error al ' + accion + ' retiros: ' + (error.response?.data?.error || error.message));
+                    }
+                  }
+                }}
+                className={`flex items-center px-4 py-2 text-white rounded-lg transition-colors ${
+                  estadoBloqueo?.bloqueado 
+                    ? 'bg-red-600 hover:bg-red-700' 
+                    : 'bg-gray-600 hover:bg-gray-700'
+                }`}
+                title={estadoBloqueo?.bloqueado ? 'Desbloquear retiros' : 'Bloquear retiros'}
+              >
+                {estadoBloqueo?.bloqueado ? (
+                  <>
+                    <FiUnlock className="mr-2" />
+                    Desbloquear
+                  </>
+                ) : (
+                  <>
+                    <FiLock className="mr-2" />
+                    Bloquear
+                  </>
+                )}
               </button>
               <button
                 onClick={() => {
@@ -285,56 +378,87 @@ export default function Dashboard() {
           {/* Tabla de últimos retiros */}
           <div className="bg-white shadow overflow-hidden sm:rounded-lg">
             <div className="px-4 py-5 sm:px-6 flex justify-between items-center">
-              <h3 className="text-lg leading-6 font-medium text-gray-900">Últimos Retiros de Combustible</h3>
-              <div className="flex items-center">
-                <span className="mr-2 text-sm text-gray-500">Actualización en tiempo real</span>
-                <span className="relative flex h-3 w-3">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
-                </span>
+              <div>
+                <h3 className="text-lg leading-6 font-semibold text-blue-800 dark:text-blue-400">Lista de Usuarios Registrados</h3>
+                <p className="text-sm text-gray-500 mt-1">Vista previa de usuarios - Haz clic en "Ver Todos" para la lista completa</p>
               </div>
+              <a
+                href="/admin/usuarios"
+                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-200 hover:scale-105 active:scale-95"
+              >
+                <FiUsers className="h-4 w-4" />
+                Ver Todos los Usuarios
+              </a>
             </div>
             <div className="overflow-x-auto">
-              {loadingRetiros ? (
+              {loadingUsuarios ? (
                 <div className="flex justify-center items-center py-12">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
                 </div>
-              ) : ultimosRetiros.length === 0 ? (
+              ) : usuarios.length === 0 ? (
                 <div className="text-center py-12 text-gray-500">
-                  No hay retiros registrados
+                  No hay usuarios registrados
                 </div>
               ) : (
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50">
                     <tr>
                       <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Cliente
+                        Usuario
+                      </th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Cédula
                       </th>
                       <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Teléfono
                       </th>
                       <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Litros Retirados
+                        Categoría
                       </th>
                       <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Fecha y Hora
+                        Litros Asignados
+                      </th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Litros Disponibles
                       </th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {ultimosRetiros.slice(0, 10).map((retiro: any) => (
-                      <tr key={retiro.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                          {retiro.cliente_nombre}
+                    {usuarios.slice(0, 10).map((usuario: any) => (
+                      <tr key={usuario.id} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center">
+                            <div className="flex-shrink-0 h-8 w-8">
+                              <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center">
+                                <FiUser className="h-4 w-4 text-blue-600" />
+                              </div>
+                            </div>
+                            <div className="ml-3">
+                              <div className="text-sm font-medium text-gray-900">
+                                {usuario.nombre}
+                              </div>
+                              <div className="text-sm text-gray-500">
+                                {usuario.placa || 'Sin placa'}
+                              </div>
+                            </div>
+                          </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {retiro.cliente_telefono}
+                          {usuario.cedula}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {usuario.telefono}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+                            {usuario.categoria}
+                          </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          <span className="font-semibold text-blue-600">{retiro.litros.toFixed(2)} L</span>
+                          <span className="font-semibold text-blue-600">{usuario.litros_mes?.toFixed(2) || '0.00'} L</span>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {new Date(retiro.fecha).toLocaleString('es-MX')}
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          <span className="font-semibold text-green-600">{usuario.litros_disponibles?.toFixed(2) || '0.00'} L</span>
                         </td>
                       </tr>
                     ))}

@@ -1,6 +1,8 @@
 'use client';
 import { useEffect, useState } from 'react';
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+
 export default function PythonTest() {
   const [message, setMessage] = useState('Cargando...');
   const [loading, setLoading] = useState(true);
@@ -8,7 +10,7 @@ export default function PythonTest() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch('http://localhost:5000/api/python');
+        const response = await fetch(`${API_URL}/api/python`);
         const data = await response.json();
         setMessage(data.message);
       } catch (error) {

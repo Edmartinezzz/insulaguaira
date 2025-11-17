@@ -6,4 +6,9 @@ export interface Cliente {
   litros_mes: number;
   litros_disponibles: number;
   activo: boolean;
+  cedula?: string;
+  categoria?: string;
+  subcategoria?: string;
+  exonerado?: boolean;
+  huella?: boolean;
 }

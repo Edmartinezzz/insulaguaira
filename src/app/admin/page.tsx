@@ -1,6 +1,6 @@
 "use client";
 import React from 'react';
-import { FiHome, FiTruck, FiPackage, FiUsers, FiDollarSign, FiSettings, FiLogOut, FiMenu, FiSearch, FiBell } from 'react-icons/fi';
+import { FiHome, FiTruck, FiPackage, FiUsers, FiDollarSign, FiSettings, FiLogOut, FiMenu, FiSearch, FiBell, FiCalendar } from 'react-icons/fi';
 
 const stats = [
   { name: 'Ventas del día', value: '2,345', change: '+12%', changeType: 'increase' },
@@ -44,9 +44,13 @@ export default function Dashboard() {
                 <FiPackage className="mr-3 h-5 w-5 text-gray-400 group-hover:text-gray-500" />
                 Inventario
               </a>
-              <a href="#" className="flex items-center px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 rounded-md group">
+              <a href="/admin/usuarios" className="flex items-center px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 rounded-md group">
                 <FiUsers className="mr-3 h-5 w-5 text-gray-400 group-hover:text-gray-500" />
-                Clientes
+                Usuarios
+              </a>
+              <a href="/admin/agendamientos" className="flex items-center px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 rounded-md group">
+                <FiCalendar className="mr-3 h-5 w-5 text-gray-400 group-hover:text-gray-500" />
+                Agendamientos
               </a>
               <a href="#" className="flex items-center px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 rounded-md group">
                 <FiDollarSign className="mr-3 h-5 w-5 text-gray-400 group-hover:text-gray-500" />

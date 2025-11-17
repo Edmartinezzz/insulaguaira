@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = 'http://localhost:5000/api';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
 const api = axios.create({
   baseURL: API_URL,
@@ -39,7 +39,7 @@ api.interceptors.response.use(
     
     if (error.code === 'ERR_NETWORK') {
       console.error('Error de conexión con el servidor:', error.message);
-      throw new Error('No se pudo conectar al servidor. Por favor, verifica que el servidor esté en ejecución en http://127.0.0.1:5000');
+      throw new Error(`No se pudo conectar al servidor. Por favor, verifica que el servidor esté en ejecución en ${API_URL}`);
     }
     
     if (error.response) {

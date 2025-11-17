@@ -3,30 +3,51 @@
 @tailwind utilities;
 
 :root {
-  /* Paleta de rojos mejorada */
-  --primary: #b91c1c;        /* Rojo principal */
-  --primary-light: #dc2626;  /* Rojo más claro para hover */
-  --primary-dark: #991b1b;   /* Rojo más oscuro */
+  /* Paleta Roja y Blanca */
+  --primary-50: #fef2f2;
+  --primary-100: #fee2e2;
+  --primary-200: #fecaca;
+  --primary-300: #fca5a5;
+  --primary-400: #f87171;
+  --primary-500: #ef4444;
+  --primary-600: #dc2626;
+  --primary-700: #b91c1c;
+  --primary-800: #991b1b;
+  --primary-900: #7f1d1d;
+  
+  /* Colores principales */
+  --primary: #dc2626;        /* Rojo principal */
+  --primary-light: #ef4444;  /* Rojo más claro para hover */
+  --primary-dark: #b91c1c;   /* Rojo más oscuro */
   --secondary: #fecaca;      /* Rojo muy claro para fondos */
-  --accent: #fca5a5;         /* Rojo medio para acentos */
-  --background: #fef2f2;     /* Fondo rojo muy claro */
+  --accent: #f87171;         /* Rojo medio para acentos */
+  --background: #ffffff;     /* Fondo blanco */
+  --background-alt: #fef2f2; /* Fondo alternativo rojo muy claro */
+  
+  /* Texto */
   --text: #1f2937;           /* Gris oscuro para texto principal */
   --text-light: #6b7280;     /* Gris para texto secundario */
+  --text-on-primary: #ffffff; /* Texto sobre fondo rojo */
+  
+  /* Neutrales */
   --white: #ffffff;
   --gray-50: #f9fafb;
   --gray-100: #f3f4f6;
   --gray-200: #e5e7eb;
   --gray-300: #d1d5db;
   --gray-700: #374151;
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  
+  /* Sombras */
+  --shadow-sm: 0 1px 2px 0 rgba(220, 38, 38, 0.05);
+  --shadow: 0 4px 6px -1px rgba(220, 38, 38, 0.1), 0 2px 4px -1px rgba(220, 38, 38, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(220, 38, 38, 0.1), 0 4px 6px -2px rgba(220, 38, 38, 0.05);
 }
 
 @layer base {
   html, body, :root {
     height: 100%;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-    @apply bg-gray-50 text-gray-900;
+    @apply bg-white text-gray-900;
   }
 
   h1 {

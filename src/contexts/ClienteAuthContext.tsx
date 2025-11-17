@@ -10,8 +10,14 @@ type Cliente = {
   cedula: string;
   telefono: string;
   categoria: string;
+  placa: string;
   litros_disponibles: number;
   litros_mes: number;
+  // Nuevos campos separados por tipo de combustible
+  litros_disponibles_gasolina?: number;
+  litros_disponibles_gasoil?: number;
+  litros_mes_gasolina?: number;
+  litros_mes_gasoil?: number;
 };
 
 type ClienteAuthContextType = {
@@ -47,7 +53,7 @@ export function ClienteAuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (cedula: string) => {
     try {
-      const { data } = await api.post('/clientes/login', { cedula });
+      const { data } = await api.post('/api/clientes/login', { cedula });
       
       // Guardar el token y los datos del cliente
       localStorage.setItem('clienteToken', data.token);

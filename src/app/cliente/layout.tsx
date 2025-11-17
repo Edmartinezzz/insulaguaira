@@ -14,7 +14,7 @@ export default function ClienteLayout({
   return (
     <ClienteAuthProvider>
       <ClienteAuthChecker>
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen bg-white">
           <main>{children}</main>
           <Toaster position="top-right" />
         </div>
@@ -60,7 +60,7 @@ function ClienteAuthChecker({ children }: { children: React.ReactNode }) {
   if (loading && !cliente) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-red-500"></div>
       </div>
     );
   }
